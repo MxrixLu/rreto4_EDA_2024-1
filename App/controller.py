@@ -32,14 +32,8 @@ El controlador se encarga de mediar entre la vista y el modelo.
 
 # Inicialización del Analizador 
 
-def newAnalyzer() : 
-    """
-    Inicializa el analizador
-    """
-    try : 
-        analyzer = {
-        }
-    pass
+
+
 
 
 
