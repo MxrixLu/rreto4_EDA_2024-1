@@ -39,22 +39,28 @@ def init():
 
 # Funciones para la carga de datos
 
-def loadServices(analyzer, routfile):
-    routesfile = cf.data_dir + routfile
-    input_file = csv.DictReader(open(routesfile, encoding="utf-8"),
+def loadServices(analyzer):
+    routesfile = cf.data_dir + "routes_full.csv"
+    input_file1 = csv.DictReader(open(routesfile, encoding="utf-8"),
                                 delimiter=",")
     lastroute = None
-    for route in input_file:
-        if lastroute is not None:
-            sameairline = lastroute['Airline'] == route['Airline']
-            samedeparture = lastroute['Departure'] == route['Departure']
-            samedestination = lastroute['Destination'] == route['Destination']
-            if sameairline and samedeparture and not samedestination:
-                model.addDestinationRoutes(analyzer, lastroute, route)
-        lastroute = route
-    model.addRouteConnections(analyzer)
-    return analyzer
-
+    airportsfile = cf.data_dir +  "airports_full.csv"
+    input_file2 = csv.DictReader(open(airportsfile, encoding="utf-8"),
+                                delimiter=",")
+    citiesfile = cf.data_dir + "worldcities.csv"
+    input_file3 = csv.DictReader(open(citiesfile, encoding="utf-8"),
+                                delimiter=",")
+    for airport in input_file2 : 
+        model.addAirportbyCode(analyzer,airport)
+    for route in input_file1:
+        model.addRoute(analyzer,route)
+        model.addRoute_2(analyzer,route)
+    for city in input_file3 : 
+        model.addCity(analyzer,city)
+    
+    airports_1 = model.totalAirports(analyzer['routes'])
+    airports_2 = model.totalAirports(analyzer['routes_2'])
+    return analyzer,airports_1,airports_2
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo

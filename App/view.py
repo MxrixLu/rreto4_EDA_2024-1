@@ -55,10 +55,19 @@ while True:
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
         print("\nInicializando....")
-        cont = controller.init()
+        analyzer = controller.init()
 
     elif int(inputs[0]) == 2:
-        pass
+        print("Cargando datos .... ")
+        services = controller.loadServices(analyzer)
+        Num_1 = services[1]
+        Num_2 = services[2]
+        print(f'Num_1 = {Num_1}')
+        print(f'Num_2 = {Num_2}')
+
+
+        
+
     elif int(inputs[0]) == 3:
         pass
     elif int(inputs[0]) == 4:
