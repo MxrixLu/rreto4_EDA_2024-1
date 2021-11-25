@@ -32,12 +32,28 @@ El controlador se encarga de mediar entre la vista y el modelo.
 
 # Inicialización del Analizador 
 
-
-
-
+def init():
+    analyzer = model.newAnalyzer()
+    return analyzer
 
 
 # Funciones para la carga de datos
+
+def loadServices(analyzer, routfile):
+    routesfile = cf.data_dir + routfile
+    input_file = csv.DictReader(open(routesfile, encoding="utf-8"),
+                                delimiter=",")
+    lastroute = None
+    for route in input_file:
+        if lastroute is not None:
+            sameairline = lastroute['Airline'] == route['Airline']
+            samedeparture = lastroute['Departure'] == route['Departure']
+            samedestination = lastroute['Destination'] == route['Destination']
+            if sameairline and samedeparture and not samedestination:
+                model.addDestinationRoutes(analyzer, lastroute, route)
+        lastroute = route
+    model.addRouteConnections(analyzer)
+    return analyzer
 
 # Funciones de ordenamiento
 
