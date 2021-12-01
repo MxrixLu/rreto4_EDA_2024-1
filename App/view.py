@@ -62,8 +62,8 @@ while True:
         services = controller.loadServices(analyzer)
         Num_1 = services[1]
         Num_2 = services[2]
-        print(f'Num_1 = {Num_1}')
-        print(f'Num_2 = {Num_2}')
+        print(f'Total de aeropuertos = {Num_1}')
+        print(f'Total de rutas aéreas = {Num_2}')
 
 
         

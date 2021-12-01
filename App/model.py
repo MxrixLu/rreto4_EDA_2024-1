@@ -168,20 +168,23 @@ def addRoute_2(analyzer):
         vertices = gr.vertices(routes)
         for vertice in lt.iterator(vertices) :
             verticeEntry = mp.get(airportRoutes,vertice)
-            verticeDestinations = me.getValue(verticeEntry)
-            for destination in lt.iterator(verticeDestinations['Destinations']): 
-                destinationEntry = mp.get(airportRoutes,destination)
-                destinations = me.getValue(destinationEntry)
-                if lt.isPresent(destinations['Destinations'],vertice) : 
-                    arco = gr.getEdge(analyzer['routes'],vertice,destination) 
-                    costo = arco['weight']
-                    containsAirport_1 = gr.containsVertex(analyzer['routes_2'],vertice)
-                    containsAirport_2 = gr.containsVertex(analyzer['routes_2'],destination)
-                    if not containsAirport_1 :
-                        addAirport_2(analyzer,vertice)
-                    if not containsAirport_2 :
-                        addAirport_2(analyzer,destination)    
-                    addConnection_2(analyzer,vertice,destination,costo)
+            if verticeEntry != None:
+                verticeDestinations = me.getValue(verticeEntry)
+                for destination in lt.iterator(verticeDestinations['Destinations']): 
+                    if destination != None:
+                        destinationEntry = mp.get(airportRoutes,destination)
+                        if destinationEntry != None:
+                            destinations = me.getValue(destinationEntry)
+                            if lt.isPresent(destinations['Destinations'],vertice) : 
+                                arco = gr.getEdge(analyzer['routes'],vertice,destination) 
+                                costo = arco['weight']
+                                containsAirport_1 = gr.containsVertex(analyzer['routes_2'],vertice)
+                                containsAirport_2 = gr.containsVertex(analyzer['routes_2'],destination)
+                                if not containsAirport_1 :
+                                    addAirport_2(analyzer,vertice)
+                                if not containsAirport_2 :
+                                    addAirport_2(analyzer,destination)    
+                                addConnection_2(analyzer,vertice,destination,costo)
 
 
         return analyzer
