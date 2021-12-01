@@ -52,9 +52,11 @@ def loadServices(analyzer):
                                 delimiter=",")
     for airport in input_file2 : 
         model.addAirportbyCode(analyzer,airport)
+        model.addAirportbyLongitude(analyzer,airport)
     for route in input_file1:
         model.addRoute(analyzer,route)
-        model.addRoute_2(analyzer,route)
+#        model.addCity_2(analyzer,route)
+    model.addRoute_2(analyzer)
     for city in input_file3 : 
         model.addCity(analyzer,city)
     

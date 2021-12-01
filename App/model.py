@@ -30,6 +30,7 @@ from DISClib.ADT.graph import containsVertex, gr
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
+from DISClib.ADT import orderedmap as om 
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
 from DISClib.Algorithms.Graphs import scc
@@ -60,10 +61,24 @@ def newAnalyzer():
                                               directed=True,
                                               size=14000,
                                               comparefunction=compareRoutes)
+        analyzer['airportsLongitudes'] = om.newMap(omaptype='RBT',comparefunction=compareLongitudes)
+        analyzer['airportRoutes'] = m.newMap(numelements=10000,
+                                    maptype='PROBING',
+                                    comparefunction=compareAirports)
+
         analyzer['routes_2'] = gr.newGraph(datastructure='ADJ_LIST',
                                               directed=False,
                                               size=14000,
                                               comparefunction=compareRoutes)
+        
+        analyzer['Cities'] = m.newMap(numelements=10000,
+                                    maptype='PROBING',
+                                    comparefunction=compareAirports)
+        analyzer['city'] = gr.newGraph(datastructure='ADJ_LIST',
+                                              directed=False,
+                                              size=14000,
+                                              comparefunction=compareRoutes)
+        
         return analyzer
     except Exception as exp:
         error.reraise(exp, 'model:newAnalyzer')
@@ -76,50 +91,104 @@ def addAirportbyCode(analyzer,airport) :
 
 def addCity(analyzer,city):
     cities = analyzer['Cities']
-    cityID = city['city_ascii']
+    cityID = city['city_ascii'] + city['country']
     mp.put(cities,cityID,city)
 
 def addRoute(analyzer,route):
-    try:
-        Airports = analyzer['airports']
 
+    try: 
+        airportRoutes = analyzer['airportRoutes']
         distance = float(route['distance_km'])
-        departure = mp.get(Airports,route['Departure'])
-        destination = mp.get(Airports,route['Destination'])
+        existed = mp.contains(airportRoutes,route['Departure'])
+        if existed :
+            entry = mp.get(airportRoutes,route['Departure'])
+            deptRoutes = me.getValue(entry)
+            presente = lt.isPresent(deptRoutes['Destinations'],route['Destination'])
+        if not existed : 
+            deptRoutes = newDeptRoute(route)
+            mp.put(airportRoutes,route['Departure'],deptRoutes)
+            presente = False
+        if not presente :
+            lt.addLast(deptRoutes['Destinations'],route['Destination'])
         containsAirport_1 = gr.containsVertex(analyzer['routes'],route['Departure'])
         containsAirport_2 = gr.containsVertex(analyzer['routes'],route['Destination'])
         if not containsAirport_1 : 
-            addAirport(analyzer,route['Departure'] ,departure)
+            addAirport(analyzer,route['Departure'])
         if not containsAirport_2: 
-            addAirport(analyzer,route['Destination'],destination)
+            addAirport(analyzer,route['Destination'])
         addConnection(analyzer,route['Departure'],route['Destination'],distance)
         
-
         return analyzer
     except Exception as exp:
         error.reraise(exp, 'model:addStopConnection')
 
-def addRoute_2(analyzer,route):
-    try:
-        Airports = analyzer['airports']
+def newDeptRoute(route) : 
+    """
+    Aniade al indice de airportRoutes un aeropuerto con su lista de rutas 
+    """
+    airportRoute = {'airport':route['Departure'],'Destinations':''}
+    airportRoute['Destinations'] = lt.newList('ARRAY_LIST',compareAirports_2)
+    return airportRoute
 
-        distance = float(route['distance_km'])
-        departure = mp.get(Airports,route['Departure'])
-        destination = mp.get(Airports,route['Destination'])
-        containsAirport_1 = gr.containsVertex(analyzer['routes_2'],route['Departure'])
-        containsAirport_2 = gr.containsVertex(analyzer['routes_2'],route['Destination'])
-        if not containsAirport_1 : 
-            addAirport_2(analyzer,route['Departure'] ,departure)
-        if not containsAirport_2: 
-            addAirport_2(analyzer,route['Destination'],destination)
-        addConnection(analyzer,route['Departure'],route['Destination'],distance)
-        
+def addCity_2(analyzer,route) : #TODO: MIRAR SI FUNCIONA
+    try: 
+        departure = route['Departure']
+        infoDeptAirport= mp.get(analyzer['airports'],departure)
+        departureAirportCity = infoDeptAirport['City'] + infoDeptAirport['Country']
+        destination = route['Destination']
+        infoDestAirport = m.get(analyzer['airports'],destination)
+    except Exception as exp:
+        error.reraise(exp, 'model:addStopConnection')
+    
+def addAirportbyLongitude(analyzer,airport) : #TODO:terminar arbol RBT de carga de aeropuertos por lat y long. 
+    longitudes = analyzer['airportsLongitudes']
+    longitude = round(float(airport['Longitude']),2)
+    entry = om.get(longitudes,longitude)
+    if entry is None : 
+        dataEntry = newDataEntry(airport)
+        om.put(longitudes,longitude,dataEntry)
+    else : 
+        dataEntry = me.getValue(entry)
+        addLongitudeIndex(dataEntry,airport)
+    return  analyzer
+    
+def newDataEntry(airport) :
+    entry = {"lstAirports":''}
+    entry['lstAirports'] = lt.newList('ARRAY_LIST')
+    return entry
+
+def addLongitudeIndex(dataEntry,Airport) : 
+    lst = dataEntry['lstAirports']
+    lt.addLast(lst,Airport)
+    
+def addRoute_2(analyzer):
+    try:
+        routes = analyzer['routes']
+        airportRoutes = analyzer['airportRoutes']
+        vertices = gr.vertices(routes)
+        for vertice in lt.iterator(vertices) :
+            verticeEntry = mp.get(airportRoutes,vertice)
+            verticeDestinations = me.getValue(verticeEntry)
+            for destination in lt.iterator(verticeDestinations['Destinations']): 
+                destinationEntry = mp.get(airportRoutes,destination)
+                destinations = me.getValue(destinationEntry)
+                if lt.isPresent(destinations['Destinations'],vertice) : 
+                    arco = gr.getEdge(analyzer['routes'],vertice,destination) 
+                    costo = arco['weight']
+                    containsAirport_1 = gr.containsVertex(analyzer['routes_2'],vertice)
+                    containsAirport_2 = gr.containsVertex(analyzer['routes_2'],destination)
+                    if not containsAirport_1 :
+                        addAirport_2(analyzer,vertice)
+                    if not containsAirport_2 :
+                        addAirport_2(analyzer,destination)    
+                    addConnection_2(analyzer,vertice,destination,costo)
+
 
         return analyzer
     except Exception as exp:
         error.reraise(exp, 'model:addStopConnection')
     
-def addAirport(analyzer,ID,airport):
+def addAirport(analyzer,ID):
     try:
         if not gr.containsVertex(analyzer['routes'], ID):
             gr.insertVertex(analyzer['routes'], ID)
@@ -127,13 +196,12 @@ def addAirport(analyzer,ID,airport):
     except Exception as exp:
         error.reraise(exp, 'model:addstop')
 
-def addAirport_2(analyzer,ID,airport):
+def addAirport_2(analyzer,ID):
     try:
-        if not gr.containsVertex(analyzer['routes_2'], ID):
-            gr.insertVertex(analyzer['routes_2'], ID)
+        gr.insertVertex(analyzer['routes_2'], ID)
         return analyzer
     except Exception as exp:
-        error.reraise(exp, 'model:addstop')
+        error.reraise(exp, 'model:addAirport')
 
 def addRouteStop(analyzer, service):
     """
@@ -228,3 +296,13 @@ def compareRoutes(stop, keyvaluestop):
         return 1
     else:
         return -1
+
+def compareLongitudes(longitude1, longitude2):
+    if (longitude1 == longitude2):
+        return 0
+    elif (longitude1 > longitude2):
+        return 1
+    else:
+        return -1
+def compareAirports_2(airp1,airp2):
+    return airp1 < airp2
