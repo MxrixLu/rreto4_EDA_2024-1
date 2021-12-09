@@ -20,6 +20,7 @@
  * along withthis program.  If not, see <http://www.gnu.org/licenses/>.
  """
 
+from App.controller import distancia
 import config as cf
 import sys
 import controller
@@ -84,8 +85,9 @@ while True:
     elif int(inputs[0]) == 6:
         mst = controller.mst(analyzer['routes'])
         distanciaMillas = controller.distancia(analyzer['routes'],mst)
+        distanciaKm = (distanciaMillas*1.6)
         print("La cantidad de nodos de la red de expansion minima es: " ,mp.size(mst['marked']))
-        print("La distancia total de la red de expansion minima es de: ",distanciaMillas,"km")
+        print("La distancia total de la red de expansion minima es de: ",distanciaKm,"km")
     elif int(inputs[0]) == 7:
         pass
     else:
