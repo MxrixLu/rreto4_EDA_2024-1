@@ -24,6 +24,7 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+from DISClib.ADT import map as mp
 assert cf
 
 sys.setrecursionlimit(1000000000)
@@ -39,11 +40,11 @@ def printMenu():
     print("Bienvenido")
     print("1- Iniciar Analizador")
     print("2- Cargar información de los aeropuertos y rutas")
-    print("3- Encontrar puntos de interconexión aérea")
-    print("4- Encontrar clústeres de tráfico aéreo")
-    print("5- Encontrar la ruta más corta entre ciudades")
-    print("6- Utilizar las millas de viajero")
-    print("7- Cuantificar el efecto de un aeropuerto cerrado")
+    print("3- Requerimiento 1: Encontrar puntos de interconexión aérea")
+    print("4- Requerimiento 2: Encontrar clústeres de tráfico aéreo")
+    print("5- Requerimiento 3: Encontrar la ruta más corta entre ciudades")
+    print("6- Requerimiento 4: Utilizar las millas de viajero")
+    print("7- Requerimiento 5: Cuantificar el efecto de un aeropuerto cerrado")
     print("8- Salir del programa")
 
 
@@ -81,7 +82,10 @@ while True:
     elif int(inputs[0]) == 5:
         pass
     elif int(inputs[0]) == 6:
-        pass
+        mst = controller.mst(analyzer['routes'])
+        distanciaMillas = controller.distancia(analyzer['routes'],mst)
+        print("La cantidad de nodos de la red de expansion minima es: " ,mp.size(mst['marked']))
+        print("La distancia total de la red de expansion minima es de: ",distanciaMillas,"km")
     elif int(inputs[0]) == 7:
         pass
     else:
