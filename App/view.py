@@ -28,6 +28,7 @@ from DISClib.ADT import stack as st
 from DISClib.ADT import queue as qu
 from DISClib.ADT import map as mp
 from DISClib.DataStructures import mapentry as me
+import model
 assert cf
 from tabulate import tabulate
 import traceback
@@ -45,7 +46,7 @@ def new_controller():
         Se crea una instancia del controlador
     """
     #TODO: Llamar la función del controlador donde se crean las estructuras de datos
-    pass
+    return  controller.new_controller()
 
 
 def print_menu():
@@ -66,8 +67,7 @@ def load_data(control):
     """
     Carga los datos
     """
-    #TODO: Realizar la carga de datos
-    pass
+    controller.load_data(control)
 
 
 def print_data(control, id):
@@ -82,7 +82,9 @@ def print_req_1(control):
         Función que imprime la solución del Requerimiento 1 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 1
-    pass
+    origen = (4.601992771389502 , -74.06610470441926 )
+    destino = (10.507688799813222, - 75.4706488665794)
+    model.req_1(control, origen, destino)
 
 
 def print_req_2(control):
@@ -154,10 +156,11 @@ if __name__ == "__main__":
     while working:
         print_menu()
         inputs = input('Seleccione una opción para continuar\n')
-        if int(inputs) == 1:
-            print("Cargando información de los archivos ....\n")
-            data = load_data(control)
-        elif int(inputs) == 2:
+        print("Cargando información de los archivos ....\n")
+        data = load_data(control)
+        print("Información cargada correctamente\n")
+            
+        if int(inputs) == 2:
             print_req_1(control)
 
         elif int(inputs) == 3:

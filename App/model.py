@@ -47,7 +47,7 @@ from DISClib.Algorithms.Sorting import selectionsort as se
 from DISClib.Algorithms.Sorting import mergesort as merg
 from DISClib.Algorithms.Sorting import quicksort as quk
 assert cf
-
+from haversine import haversine, Unit
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá
 dos listas, una para los videos, otra para las categorias de los mismos.
@@ -61,20 +61,93 @@ def new_data_structs():
     Inicializa las estructuras de datos del modelo. Las crea de
     manera vacía para posteriormente almacenar la información.
     """
-    #TODO: Inicializar las estructuras de datos
-    pass
+    
+    data_struct = {  'airports': None,
+                    'distance_graph': None, 
+                    'time_graph': None}
+    
+    data_struct['airports'] = mp.newMap(maptype='PROBING')
+    data_struct['coordinates'] = mp.newMap(maptype='PROBING')
+    data_struct['comercial_distance'] = gr.newGraph('ADJ_LIST', directed=False)
+    data_struct['militar_distance'] = gr.newGraph('ADJ_LIST', directed=False)
+    data_struct['carga_distance'] = gr.newGraph('ADJ_LIST', directed=False)
+    data_struct['comercial_time'] = gr.newGraph('ADJ_LIST', directed=False)
+    data_struct['militar_time'] = gr.newGraph('ADJ_LIST', directed=False)
+
+    
+    return data_struct
 
 
 # Funciones para agregar informacion al modelo
 
-def add_data(data_structs, data):
+def add_airport(data_structs, data):
     """
     Función para agregar nuevos elementos a la lista
     """
-    #TODO: Crear la función para agregar elementos a una lista
-    pass
+    entry = mp.get(data_structs['airports'], data['ICAO'])
+    
+    if entry is None:
+        mp.put(data_structs['airports'], data['ICAO'], data)
+        
+    entry2 = mp.get(float(data['LATITUD'].replace(',', '.')) , float(data['LONGITUD'].replace(',', '.')))
+    
+    if entry2 is None:
+        mp.put(data_structs['coordinates_com'], entry2, data['ICAO'])
+        
 
+def add_vertex_comercial(data_structs, data):
+    g_comercial_distance = data_structs['comercial_distance']
+    g_comercial_time = data_structs['comercial_time']
+    data['tipo'] = 'comercial'
+    data['concurrencia'] = 0
+    if not gr.containsVertex(g_comercial_distance, data['ICAO']):
+        gr.insertVertex(g_comercial_distance, data['ICAO'])
+    if not gr.containsVertex(g_comercial_time, data['ICAO']):
+        gr.insertVertex(g_comercial_time, data['ICAO'])
 
+def add_vertex_militar(data_structs, data):
+    g_distance = data_structs['militar_distance']
+    g_time = data_structs['militar_time']
+    data['tipo'] = 'militar'
+    data['concurrencia'] = 0
+    if not gr.containsVertex(g_distance, data['ICAO']):
+        gr.insertVertex(g_distance, data['ICAO'])
+    if not gr.containsVertex(g_time, data['ICAO']):
+        gr.insertVertex(g_time, data['ICAO'])
+    
+def add_vertex_carga(data_structs, data):
+    g_distance = data_structs['carga_distance']
+    data['tipo'] = 'carga'
+    data['concurrencia'] = 0
+    if not gr.containsVertex(g_distance, data['ICAO']):
+        gr.insertVertex(g_distance, data['ICAO'])
+
+def add_edges(data_structs, data):
+    
+    aero_origin= me.getValue(mp.get(data_structs['airports'], data['ORIGEN']))
+    origin = float(aero_origin['LATITUD'].replace(',', '.')), float(aero_origin['LONGITUD'].replace(',', '.'))
+    aero_destin = me.getValue(mp.get(data_structs['airports'], data['DESTINO']))
+    destination = float(aero_destin['LATITUD'].replace(',', '.')), float(aero_destin['LONGITUD'].replace(',', '.'))
+    
+    distance = haversine(origin, destination)
+    
+    time = data['TIEMPO_VUELO']
+    
+    if data['TIPO_VUELO'] == 'AVIACION_COMERCIAL':
+        g_distance = data_structs['comercial_distance']
+        g_time = data_structs['comercial_time']
+    elif data['TIPO_VUELO'] == 'MILITAR':
+        g_distance = data_structs['militar_distance']
+        g_time = data_structs['militar_time']
+    elif data['TIPO_VUELO'] == 'AVIACION_CARGA':
+        g_distance = data_structs['carga_distance']
+        
+    if not gr.containsVertex(g_distance, data['ORIGEN']):
+        gr.addEdge(g_distance, data['ORIGEN'], data['DESTINO'], distance)
+    if not data['TIPO_VUELO'] == 'AVIACION_CARGA':
+        if not gr.containsVertex(g_time, data['ORIGEN']):
+            gr.addEdge(g_time, data['ORIGEN'], data['DESTINO'], time)
+            
 # Funciones para creacion de datos
 
 def new_data(id, info):
@@ -103,20 +176,50 @@ def data_size(data_structs):
     pass
 
 
-def req_1(data_structs):
+def req_1(data_structs, origen, destino):
     """
     Función que soluciona el requerimiento 1
     """
-    # TODO: Realizar el requerimiento 1
-    pass
+    comercial_graph = data_structs['comercial_distance']
+    punto_origen = punto_mas_cercano(origen[0], origen[1], data_structs['coordinates'])
+    punto_destino = punto_mas_cercano(destino[0], destino[1], data_structs['coordinates'])
+    
+    init = punto_origen[0]
+    fin =  punto_destino[0]
+    
+    camino_dfs = dfs.DepthFirstSearch(comercial_graph, init)
+    
+    camino = dfs.pathTo(camino_dfs, fin)
+    distancia = float(haversine((punto_origen[1], punto_origen[2]), (punto_destino[1], punto_destino[2])))
+    tamaño = st.size(camino)
 
+    print(distancia)
+    return camino, distancia, tamaño
 
-def req_2(data_structs):
+def req_2(data_structs, origen, destino):
     """
     Función que soluciona el requerimiento 2
     """
-    # TODO: Realizar el requerimiento 2
-    pass
+    comercial_graph = data_structs['comercial_distance']
+    punto_origen = punto_mas_cercano(origen[0], origen[1], data_structs['coordinates'])
+    punto_destino = punto_mas_cercano(destino[0], destino[1], data_structs['coordinates'])
+    
+    init = punto_origen[0]
+    fin =  punto_destino[0]
+        
+    camino_bfs = bfs.BreathFirstSearch(comercial_graph, init)
+    
+    camino = bfs.pathTo(camino_bfs, fin)
+    distancia  = 0
+    vis_vertex = lt.newList('ARRAY_LIST')
+    for vertex in lt.iterator(camino):
+        lt.addLast(vis_vertex, vertex['vertexA'])
+        lt.addLast(vis_vertex, vertex['vertexB'])
+        distancia += vertex['weight']
+    tamaño = lt.size(vis_vertex)
+
+    print(tamaño)
+    return camino, distancia, tamaño
 
 
 def req_3(data_structs):
@@ -175,6 +278,21 @@ def compare(data_1, data_2):
     """
     #TODO: Crear función comparadora de la lista
     pass
+
+def punto_mas_cercano(lat, lon, mapa_puntos):
+    id_mas_cercano = None
+    distancia_minima = float("inf")
+    
+    for id_punto in lt.iterator(mp.keySet(mapa_puntos)):  
+        latitud_punto = id_punto[0]
+        longitud_punto = id_punto[1]
+        distancia = haversine((lat, lon), (latitud_punto, longitud_punto))
+
+        if distancia < distancia_minima:
+            distancia_minima = distancia
+            id_mas_cercano = me.getValue(mp.get(mapa_puntos, id_punto))
+
+    return id_mas_cercano, latitud_punto, longitud_punto
 
 # Funciones de ordenamiento
 

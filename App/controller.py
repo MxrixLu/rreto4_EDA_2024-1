@@ -1,4 +1,5 @@
-﻿"""
+﻿
+"""
  * Copyright 2020, Departamento de sistemas y Computación,
  * Universidad de Los Andes
  *
@@ -35,20 +36,24 @@ def new_controller():
     """
     Crea una instancia del modelo
     """
-    #TODO: Llamar la función del modelo que crea las estructuras de datos
-    pass
-
+    return model.new_data_structs()
 
 # Funciones para la carga de datos
 
-def load_data(control, filename):
+def load_data(control):
     """
     Carga los datos del reto
     """
-    # TODO: Realizar la carga de datos
-    pass
-
-
+    input_file = csv.DictReader(open(cf.data_dir + 'airports-2022.csv' , encoding="utf-8"), delimiter=';')
+    for airport in input_file:
+        model.add_airport(control, airport)
+        model.add_vertex_carga(control, airport)
+        model.add_vertex_comercial(control, airport)
+        model.add_vertex_militar(control, airport)
+    
+    input_ffile = csv.DictReader(open(cf.data_dir + 'fligths-2022.csv', encoding="utf-8"), delimiter=';')
+    for flight in input_ffile:
+        model.add_edges(control, flight)
 # Funciones de ordenamiento
 
 def sort(control):
