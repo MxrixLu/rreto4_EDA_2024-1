@@ -89,10 +89,11 @@ def add_airport(data_structs, data):
     if entry is None:
         mp.put(data_structs['airports'], data['ICAO'], data)
         
-    entry2 = mp.get(float(data['LATITUD'].replace(',', '.')) , float(data['LONGITUD'].replace(',', '.')))
+    coordinates = (float(data['LATITUD'].replace(',', '.')) , float(data['LONGITUD'].replace(',', '.')))
+    entry2 = mp.get(data_structs['coordinates'], coordinates)
     
     if entry2 is None:
-        mp.put(data_structs['coordinates_com'], entry2, data['ICAO'])
+        mp.put(data_structs['coordinates'], coordinates, data['ICAO'])
         
 
 def add_vertex_comercial(data_structs, data):
@@ -142,11 +143,12 @@ def add_edges(data_structs, data):
     elif data['TIPO_VUELO'] == 'AVIACION_CARGA':
         g_distance = data_structs['carga_distance']
         
-    if not gr.containsVertex(g_distance, data['ORIGEN']):
+    if  gr.containsVertex(g_distance, data['ORIGEN']):
         gr.addEdge(g_distance, data['ORIGEN'], data['DESTINO'], distance)
     if not data['TIPO_VUELO'] == 'AVIACION_CARGA':
-        if not gr.containsVertex(g_time, data['ORIGEN']):
+        if  gr.containsVertex(g_time, data['ORIGEN']):
             gr.addEdge(g_time, data['ORIGEN'], data['DESTINO'], time)
+
             
 # Funciones para creacion de datos
 
@@ -191,7 +193,7 @@ def req_1(data_structs, origen, destino):
     
     camino = dfs.pathTo(camino_dfs, fin)
     distancia = float(haversine((punto_origen[1], punto_origen[2]), (punto_destino[1], punto_destino[2])))
-    tamaño = st.size(camino)
+    tamaño = lt.size(camino)
 
     print(distancia)
     return camino, distancia, tamaño
@@ -211,12 +213,17 @@ def req_2(data_structs, origen, destino):
     
     camino = bfs.pathTo(camino_bfs, fin)
     distancia  = 0
-    vis_vertex = lt.newList('ARRAY_LIST')
+    tiempo = 0
+    vis_vertex = None
+    
     for vertex in lt.iterator(camino):
-        lt.addLast(vis_vertex, vertex['vertexA'])
-        lt.addLast(vis_vertex, vertex['vertexB'])
-        distancia += vertex['weight']
-    tamaño = lt.size(vis_vertex)
+        if not vis_vertex == None:
+            edges_distance = gr.getEdge(data_structs['comercial_distance'], vis_vertex, vertex)['weight']
+            edges_time =  gr.getEdge(data_structs['comercial_time'], vis_vertex, vertex)['weight']
+            distancia += edges_distance
+            tiempo += int(edges_time)
+        vis_vertex = vertex
+    tamaño = lt.size(camino)
 
     print(tamaño)
     return camino, distancia, tamaño
@@ -282,17 +289,23 @@ def compare(data_1, data_2):
 def punto_mas_cercano(lat, lon, mapa_puntos):
     id_mas_cercano = None
     distancia_minima = float("inf")
+    latitud = 0
+    longitud = 0
     
     for id_punto in lt.iterator(mp.keySet(mapa_puntos)):  
+        
         latitud_punto = id_punto[0]
         longitud_punto = id_punto[1]
+        print()
         distancia = haversine((lat, lon), (latitud_punto, longitud_punto))
 
         if distancia < distancia_minima:
             distancia_minima = distancia
             id_mas_cercano = me.getValue(mp.get(mapa_puntos, id_punto))
+            latitud = latitud_punto
+            longitud = longitud_punto
 
-    return id_mas_cercano, latitud_punto, longitud_punto
+    return id_mas_cercano, latitud, longitud
 
 # Funciones de ordenamiento
 

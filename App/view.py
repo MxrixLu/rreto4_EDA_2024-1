@@ -92,7 +92,8 @@ def print_req_2(control):
         Función que imprime la solución del Requerimiento 2 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 2
-    pass
+    model.req_2(control, (4.601992771389502 , -74.06610470441926 ), (44.8272018433,-93.4570999146) )
+    
 
 
 def print_req_3(control):
